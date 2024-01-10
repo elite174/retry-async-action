@@ -1,8 +1,9 @@
 type AsyncAction<T> = (currentActionCall: number) => Promise<T>;
 
 export type RetryParams<T, E = unknown> = {
-  /** Function called when action is fulfilled.
-   *  Return true to stop retries
+  /**
+   * Function called when action is fulfilled.
+   * Return true to stop retries
    */
   onResolve?: (data: T, actionCallNumber: number) => boolean;
   /**
