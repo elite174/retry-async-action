@@ -2,6 +2,15 @@
   "name": "retry-async-action",
   "version": "1.0.0",
   "description": "A simple utility to retry async actions",
+  "keywords": [
+    "retry",
+    "async",
+    "action",
+    "promise",
+    "function",
+    "utility",
+    "simple"
+  ],
   "author": {
     "name": "Vladislav Lipatov",
     "email": "lipatov.dev@gmail.com"
