@@ -1,162 +1,97 @@
-import { describe, expect, test } from "vitest";
+import { describe, test, vi } from "vitest";
 
 import { retryAsyncAction } from ".";
 
-describe(`${retryAsyncAction.name}`, () => {
-  test("should return result of action if it is not rejected", async () => {
-    const result = await retryAsyncAction(() => Promise.resolve(true), {
-      timeouts: [],
-      stopWhen: () => true,
+describe.concurrent(`${retryAsyncAction.name}`, () => {
+  test("should retry action", async ({ expect }) => {
+    const action = vi.fn().mockRejectedValue(new Error("Oops, something went wrong!"));
+
+    await retryAsyncAction(action, { timeouts: [100, 200, 300] });
+
+    expect(action).toHaveBeenCalledTimes(4);
+  });
+
+  test("should stop retrying on resolve", async ({ expect }) => {
+    const action = vi.fn().mockRejectedValueOnce(new Error("Oops, something went wrong!"));
+
+    await retryAsyncAction(action, {
+      timeouts: [100, 200, 300],
+      onResolve: () => true,
     });
 
-    expect(result).toBe(true);
+    expect(action).toHaveBeenCalledTimes(2);
   });
 
-  test("should return fallback if action is rejected and retryOnReject is false", async () => {
-    const result = await retryAsyncAction(() => Promise.reject(), {
-      timeouts: [],
-      stopWhen: () => true,
-      retryOnReject: false,
-      fallback: false,
+  test("should stop retrying on reject", async ({ expect }) => {
+    const action = vi.fn().mockRejectedValueOnce(new Error("Oops, something went wrong!"));
+
+    await retryAsyncAction(action, {
+      timeouts: [100, 200, 300],
+      onReject: () => true,
     });
 
-    expect(result).toBe(false);
+    expect(action).toHaveBeenCalledTimes(1);
   });
 
-  test("should retry action if it is rejected and retryOnReject is true", async () => {
-    const result = await retryAsyncAction(() => Promise.reject(), {
-      timeouts: [0],
-      stopWhen: () => true,
-      retryOnReject: true,
+  test("should return fallback value", async ({ expect }) => {
+    const action = vi.fn().mockRejectedValue(new Error("Oops, something went wrong!"));
+
+    const fallback = "fallback";
+
+    const result = await retryAsyncAction(action, {
+      timeouts: [100, 200, 300],
+      fallback,
     });
 
-    expect(result).toBe(undefined);
+    expect(result).toBe(fallback);
   });
 
-  test("should return fallback if action is rejected and retryOnReject is true and all retries are exhausted", async () => {
-    const result = await retryAsyncAction(() => Promise.reject(), {
-      timeouts: [0],
-      stopWhen: () => true,
-      retryOnReject: true,
-      fallback: false,
+  test("should return data", async ({ expect }) => {
+    const action = vi.fn().mockResolvedValueOnce("data");
+
+    const result = await retryAsyncAction(action, {
+      timeouts: [100, 200, 300],
     });
 
-    expect(result).toBe(false);
+    expect(result).toBe("data");
   });
 
-  test("should run action valid number of times", async () => {
-    let count = 0;
+  test("should return data on resolve", async ({ expect }) => {
+    const action = vi.fn().mockResolvedValueOnce("data");
 
-    await retryAsyncAction(
-      () => {
-        count++;
-        return Promise.reject();
-      },
-      {
-        timeouts: [0, 0, 0],
-        stopWhen: () => false,
-        retryOnReject: true,
-      }
-    );
-
-    expect(count).toBe(4);
-  });
-
-  test("should stop retrying if stopWhen returns true", async () => {
-    let count = 0;
-
-    await retryAsyncAction(
-      () => {
-        count++;
-        return Promise.resolve(count);
-      },
-      {
-        timeouts: [0, 0, 0],
-        stopWhen: () => count === 2,
-        retryOnReject: true,
-      }
-    );
-
-    expect(count).toBe(2);
-  });
-
-  test("should stop retrying if stopWhen returns true even if action is rejected", async () => {
-    let count = 0;
-
-    await retryAsyncAction(
-      () => {
-        count++;
-        return Promise.reject();
-      },
-      {
-        timeouts: [0, 0, 0],
-        stopWhen: () => count === 2,
-        retryOnReject: true,
-      }
-    );
-
-    expect(count).toBe(2);
-  });
-
-  test("should return fallback if action is rejected and stopWhen returns true", async () => {
-    const result = await retryAsyncAction(() => Promise.reject(), {
-      timeouts: [0, 0, 0],
-      stopWhen: () => true,
-      retryOnReject: true,
-      fallback: false,
+    const result = await retryAsyncAction(action, {
+      timeouts: [100, 200, 300],
+      onResolve: () => true,
     });
 
-    expect(result).toBe(false);
+    expect(result).toBe("data");
   });
 
-  test("should return fallback if action is rejected and stopWhen returns true even if retryOnReject is false", async () => {
-    const result = await retryAsyncAction(() => Promise.reject(), {
-      timeouts: [0, 0, 0],
-      stopWhen: () => true,
-      retryOnReject: false,
-      fallback: false,
+  test("should return fallback value on reject", async ({ expect }) => {
+    const action = vi.fn().mockRejectedValueOnce(new Error("Oops, something went wrong!"));
+
+    const fallback = "fallback";
+
+    const result = await retryAsyncAction(action, {
+      timeouts: [100, 200, 300],
+      onReject: () => true,
+      fallback,
     });
 
-    expect(result).toBe(false);
+    expect(result).toBe(fallback);
   });
 
-  test("should return fallback if action is rejected and stopWhen returns true even if retryOnReject is true", async () => {
-    const result = await retryAsyncAction(() => Promise.reject(), {
-      timeouts: [0, 0, 0],
-      stopWhen: () => true,
-      retryOnReject: true,
-      fallback: false,
+  test("should return fallback value on reject", async ({ expect }) => {
+    const action = vi.fn().mockRejectedValueOnce(new Error("Oops, something went wrong!"));
+
+    const fallback = "fallback";
+
+    const result = await retryAsyncAction(action, {
+      timeouts: [100, 200, 300],
+      onReject: () => true,
+      fallback,
     });
 
-    expect(result).toBe(false);
-  });
-
-  test("should return fallback if action is rejected and stopWhen returns true even if retryOnReject is true and all retries are exhausted", async () => {
-    const result = await retryAsyncAction(() => Promise.reject(), {
-      stopWhen: () => true,
-      timeouts: [0, 0, 0],
-      retryOnReject: true,
-      fallback: false,
-    });
-
-    expect(result).toBe(false);
-  });
-
-  test("should return valid number of action calls in stopWhen", async () => {
-    let count = 0;
-
-    await retryAsyncAction(
-      () => {
-        count++;
-        return Promise.reject();
-      },
-      {
-        timeouts: [0, 0, 0],
-        stopWhen: ({ actionCallNumber }) => actionCallNumber === 2,
-        retryOnReject: true,
-      }
-    );
-
-    expect(count).toBe(2);
+    expect(result).toBe(fallback);
   });
 });
