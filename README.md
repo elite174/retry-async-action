@@ -9,6 +9,19 @@ A highly customizable utility to retry async actions
 
 `pnpm i retry-async-action`
 
+In browser:
+
+```html
+<script type="module">
+  // specify correct version here
+  import { retryAsyncAction } from "https://cdn.jsdelivr.net/npm/retry-async-action@1.0.0/dist/index.js";
+
+  retryAsyncAction(async () => {
+    console.log("Hello world!");
+  });
+</script>
+```
+
 ## Usage
 
 ```ts
