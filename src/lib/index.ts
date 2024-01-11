@@ -17,15 +17,17 @@ export type RetryParams<T, E = unknown> = {
   fallback?: T;
 };
 
-async function* createRetryGenerator<T>(action: AsyncAction<T>, timeouts: Iterable<number> = []) {
-  yield action;
+async function* createRetryGenerator(timeouts: Iterable<number> = []) {
+  let iteration = 0;
+
+  yield iteration++;
 
   for (const time of timeouts) {
     // Ignore timeout if it is 0
     yield time === 0
-      ? action
-      : await new Promise<AsyncAction<T>>((resolve) => {
-          setTimeout(() => resolve(action), time);
+      ? iteration++
+      : await new Promise<number>((resolve) => {
+          setTimeout(() => resolve(iteration++), time);
         });
   }
 }
@@ -34,14 +36,11 @@ export const retryAsyncAction = async <T, E = unknown>(
   action: AsyncAction<T>,
   { timeouts, fallback, onResolve, onReject }: RetryParams<T, E> = {}
 ) => {
-  let actionCallNumber = 0;
-
-  for await (const nextAction of createRetryGenerator(action, timeouts)) {
+  for await (const actionCallNumber of createRetryGenerator(timeouts)) {
     try {
-      actionCallNumber++;
-      const data = await nextAction(actionCallNumber);
+      const data = await action(actionCallNumber);
 
-      if (onResolve && onResolve(data, actionCallNumber) === false) continue;
+      if (onResolve?.(data, actionCallNumber) === false) continue;
       else return data;
     } catch (error) {
       if (onReject?.(error as E, actionCallNumber)) return fallback;
