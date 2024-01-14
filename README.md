@@ -3,7 +3,9 @@
 [![version](https://img.shields.io/npm/v/retry-async-action?style=for-the-badge)](https://www.npmjs.com/package/retry-async-action)
 ![npm](https://img.shields.io/npm/dw/retry-async-action?style=for-the-badge)
 
-A highly customizable utility to retry async actions
+A highly customizable utility to retry async actions.
+
+No deps, only 542B minified, 353B Gzipped.
 
 ## Installation
 
